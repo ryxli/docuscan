@@ -3,10 +3,12 @@
     <v-app-bar flat app>
       <v-app-bar-nav-icon class="grey--text" @click="drawer = !drawer"></v-app-bar-nav-icon>
 
-      <v-toolbar-title :class="clear" class="grey--text">
-        <span class="font-weight-bold blue--text">Docu</span>
-        <span>Scan</span>
-      </v-toolbar-title>
+      <router-link to="/" style="text-decoration:none;">
+        <v-toolbar-title :class="clear" class="grey--text">
+          <span class="font-weight-bold blue--text">Docu</span>
+          <span>Scan</span>
+        </v-toolbar-title>
+      </router-link>
 
       <v-spacer></v-spacer>
       <v-btn depressed class="grey--text">
@@ -45,7 +47,7 @@ export default {
 </script>
 
 <style>
-.clear {
+li a {
   text-decoration: none;
 }
 </style>

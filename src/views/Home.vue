@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <v-container class="my-5">
+    <v-container class="my-12 .display-3">
       <v-row wrap>
         <v-col cols="12">
           <h1>Sign with Confidence</h1>
