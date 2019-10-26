@@ -29,18 +29,21 @@
       <v-btn color="primary" @click="deleteItem">Delete</v-btn>
     </v-container>
 
-    <p>{{ message }}</p>
+    <p >{{ output }}</p>
     <input v-model="message" />
+    <v-btn v-on:click="find_phrases()"> Get Phrases </v-btn>
   </div>
 </template>
 
 
 <script>
+import axios from 'axios'
 export default {
   data() {
     return {
       message:
-        "Type whatever you want in the bottom and you can access it like this in the html template portion: {{ message }} filler",
+        "Type whatever you want in the bottom and you can access it like this in the html template portion",
+      output:"dummy",
       file: "",
       selected: [],
       dialog: false,
@@ -81,7 +84,7 @@ export default {
             "Content-Type": "multipart/form-data"
           }
         })
-        .then(function() {
+        .then(function(response) {
           console.log("SUCCESS!!");
         })
         .catch(function() {
@@ -94,6 +97,20 @@ export default {
         this.documents.splice(index, 1);
       }
       this.dialog = false;
+      console.log("Got here")
+    },
+    find_phrases(){
+      var s=" "
+      console.log(this.message.replace(/ /g,"%20"));
+      var new_message=this.message.replace(" ","%20");
+      console.log("Got here");
+      this.output="Loading..."
+      axios.get("http://localhost:5000/calc/".concat(new_message)).then(function(response){
+        console.log("Success")
+        
+        this.output=response.data
+        console.log(this.output)
+      }.bind(this));
     }
   }
 };
