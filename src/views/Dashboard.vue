@@ -2,12 +2,7 @@
   <div class="dashboard">
     <v-subheader class="grey--text">Dashboard</v-subheader>
 
-    <label>
-      File
-      <input type="file" id="file" ref="file" v-on:change="handleFileUpload()" />
-      <v-btn v-on:click="submitFile()">Submit</v-btn>
-    </label>
-
+    <upload-button title="Browse" :selectedCallback="fileSelectedFunc"></upload-button>
     <v-container class="my-5">
       <v-data-table
         v-model="selected"
@@ -26,24 +21,29 @@
           <td class="text-xs-left">{{ props.item.safeBy }}</td>
         </template>
       </v-data-table>
+      <v-btn color="primary" @click="find_phrases">Scan</v-btn>
       <v-btn color="primary" @click="deleteItem">Delete</v-btn>
     </v-container>
 
-    <p >{{ output }}</p>
+    <p>{{ output }}</p>
     <input v-model="message" />
-    <v-btn v-on:click="find_phrases()"> Get Phrases </v-btn>
   </div>
 </template>
 
 
 <script>
-import axios from 'axios'
+import axios from "axios";
+import UploadButton from "@/components/UploadButton";
 export default {
+  components: {
+    UploadButton
+  },
   data() {
     return {
+      src: "",
       message:
         "Type whatever you want in the bottom and you can access it like this in the html template portion",
-      output:"dummy",
+      output: "dummy",
       file: "",
       selected: [],
       dialog: false,
@@ -97,20 +97,22 @@ export default {
         this.documents.splice(index, 1);
       }
       this.dialog = false;
-      console.log("Got here")
-    },
-    find_phrases(){
-      var s=" "
-      console.log(this.message.replace(/ /g,"%20"));
-      var new_message=this.message.replace(" ","%20");
       console.log("Got here");
-      this.output="Loading..."
-      axios.get("http://localhost:5000/calc/".concat(new_message)).then(function(response){
-        console.log("Success")
-        
-        this.output=response.data
-        console.log(this.output)
-      }.bind(this));
+    },
+    find_phrases() {
+      var s = " ";
+      console.log(this.message.replace(/ /g, "%20"));
+      var new_message = this.message.replace(" ", "%20");
+      console.log("Got here");
+      this.output = "Loading...";
+      axios.get("http://localhost:5000/calc/".concat(new_message)).then(
+        function(response) {
+          console.log("Success");
+
+          this.output = response.data;
+          console.log(this.output);
+        }.bind(this)
+      );
     }
   }
 };
