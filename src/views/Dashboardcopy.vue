@@ -4,13 +4,7 @@
 
     <upload-button title="Browse" @uploaded="updateParent"></upload-button>
     <v-container class="my-5">
-      <v-data-table
-        v-model="selected"
-        :headers="headers"
-        :items="documents"
-        item-key="name"
-        show-select
-      >
+      <v-data-table v-model="selected" :headers="headers" :items="documents" item-key="name">
         <template slot="items" slot-scope="props">
           <td>
             <v-checkbox v-model="props.selected" primary hide-details></v-checkbox>
@@ -20,12 +14,21 @@
           <td class="text-xs-left">{{ props.item.safeBy }}</td>
         </template>
       </v-data-table>
-      <v-btn color="primary" @click="find_phrases">Scan</v-btn>
-      <v-btn color="primary" @click="deleteItem">Delete</v-btn>
     </v-container>
 
-    <p>{{ output }}</p>
-    <input v-model="message" />
+    <v-container>
+      <v-textarea
+        filled
+        id="textarea"
+        v-model="message"
+        placeholder="Please upload your contract above and paste the contents of it in here..."
+        rows="10"
+        max-rows="15"
+      ></v-textarea>
+      <v-btn color="primary" @click="find_phrases">Scan</v-btn>
+    </v-container>
+
+    <p>{{output}}</p>
   </div>
 </template>
 
@@ -40,10 +43,9 @@ export default {
   data() {
     return {
       src: "",
-      message:
-        "Type whatever you want in the bottom and you can access it like this in the html template portion",
-      output: "dummy",
-      file: "",
+      message: "",
+      output: "",
+      temp64: "",
       selected: [],
       dialog: false,
       headers: [
@@ -68,6 +70,7 @@ export default {
       var reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = function() {
+        this.temp64 = reader.result;
         console.log(reader.result);
       };
       reader.onerror = function(error) {
@@ -87,8 +90,8 @@ export default {
         this.src = value; // someValue
         this.addDocForm.name = value.name;
         this.addDocForm.size = value.size;
-        this.addDocForm.base64 = this.getBase64(value);
-        this.src = value;
+        this.getBase64(value);
+        this.addDocForm.base64 = this.temp64;
         this.find_phrases();
         const payload = {
           name: this.addDocForm.name,
@@ -100,65 +103,8 @@ export default {
         this.initForm();
       }
     },
-    deleteItem() {
-      for (var i = 0; i < this.selected.length; i++) {
-        this.onDeleteDoc(this.selected[0]);
-      }
-    },
-    removeDoc(docID) {
-      const path = `http://localhost:5000/documents/${docID}`;
-      axios
-        .delete(path)
-        .then(() => {
-          this.getDocs();
-          this.message = "Doc removed!";
-          this.showMessage = true;
-        })
-        .catch(error => {
-          // eslint-disable-next-line
-          console.error(error);
-          this.getDocs();
-        });
-    },
-    onDeleteDoc(doc) {
-      this.removeDoc(doc.id);
-    },
-    decode64(payload) {
-      var pdfData = atob(payload["base64"]);
-      var pdfjsLib = window["pdfjs-dist/build/pdf"];
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "//mozilla.github.io/pdf.js/build/pdf.worker.js";
-      var loadingTask = pdfjsLib.getDocument({ data: pdfData });
-
-      loadingTask.promise.then(
-        function(pdf) {
-          var pdfDocument = pdf;
-          var pagesPromises = [];
-
-          for (var i = 0; i < pdf.numPages; i++) {
-            // Required to prevent that i is always the total of pages
-            (function(pageNumber) {
-              pagesPromises.push(getPageText(pageNumber, pdfDocument));
-            })(i + 1);
-          }
-
-          Promise.all(pagesPromises).then(function(pagesText) {
-            // Display text of all the pages in the console
-            console.log(pagesText);
-          });
-          return pagesText;
-        },
-        function(reason) {
-          // PDF loading error
-          console.error(reason);
-        }
-      );
-    },
     find_phrases() {
-      var s = this.decode64(this.selected[0]["base64"]);
-      console.log(s.replace(/ /g, "%20"));
-      var new_message = s.replace(" ", "%20");
-      console.log("Got here");
+      var new_message = this.message.replace(" ", "%20");
       this.output = "Loading...";
       axios.get("http://localhost:5000/calc/".concat(new_message)).then(
         function(response) {
@@ -197,30 +143,6 @@ export default {
       this.addDocForm.size = "";
     }
   },
-  getPageText(pageNum, PDFDocumentInstance) {
-    // Return a Promise that is solved once the text of the page is retrieven
-    return new Promise(function(resolve, reject) {
-      PDFDocumentInstance.getPage(pageNum).then(function(pdfPage) {
-        // The main trick to obtain the text of the PDF page, use the getTextContent method
-        pdfPage.getTextContent().then(function(textContent) {
-          var textItems = textContent.items;
-          var finalString = "";
-
-          // Concatenate the string of the item to the final string
-          for (var i = 0; i < textItems.length; i++) {
-            var item = textItems[i];
-
-            finalString += item.str + " ";
-          }
-
-          // Solve promise with the text retrieven from the page
-          resolve(finalString);
-        });
-      });
-    });
-    return finalString;
-  },
-
   created() {
     this.getDocs();
   }
