@@ -1,44 +1,26 @@
 <template>
-  <div class="btn btn-primary jbtn-file">
-    <v-container>
-      <input type="file" ref="files" multiple v-on:change="fileUpload()" />
-      <v-btn v-on:click="submitFile()">Upload</v-btn>
-    </v-container>
+  <div class="container">
+    <div class="large-12 medium-12 small-12 cell">
+      <input type="file" ref="file" style="display: none" />
+      <v-btn @click="$refs.file.click()">Upload</v-btn>
+      <v-btn @click="onClickButton()">Submit</v-btn>
+    </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
 export default {
   name: "upload-button",
   data() {
     return {
-      files: []
+      file: ""
     };
   },
   methods: {
-    filesUpload() {
-      this.files = this.$refs.files.files;
-    },
-    submitFile() {
-      let formData = new FormData();
-      for (var i = 0; i < this.files.length; i++) {
-        let file = this.files[i];
-
-        formData.append("files[" + i + "]", file);
-      }
-
-      axios
-        .post("/multiple-files", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        })
-        .then(function() {
-          console.log("SUCCESS!!");
-        })
-        .catch(function() {
-          console.log("FAILURE!!");
-        });
+    onClickButton(event) {
+      this.file = this.$refs.file.files[0];
+      this.$emit("uploaded", this.file);
     }
   }
 };

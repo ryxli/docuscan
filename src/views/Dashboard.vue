@@ -2,14 +2,13 @@
   <div class="dashboard">
     <v-subheader class="grey--text">Dashboard</v-subheader>
 
-    <upload-button title="Browse" :selectedCallback="fileSelectedFunc"></upload-button>
+    <upload-button title="Browse" @uploaded="updateParent"></upload-button>
     <v-container class="my-5">
       <v-data-table
         v-model="selected"
         :headers="headers"
         :items="documents"
         item-key="name"
-        select-all
         show-select
       >
         <template slot="items" slot-scope="props">
@@ -54,55 +53,111 @@ export default {
           sortable: true,
           value: "name"
         },
-        { text: "Scanned?", value: "scanned" },
-        { text: "Safe", value: "safe" }
+        { text: "Size", value: "size" }
       ],
-      documents: [
-        {
-          name: "Frozen",
-          scanned: "yes",
-          safe: "no"
-        },
-        {
-          name: "Frozen Yogurt",
-          scanned: "yes",
-          safe: "yes"
-        }
-      ]
+      documents: [],
+      addDocForm: {
+        name: "",
+        size: "",
+        base64: ""
+      }
     };
   },
   methods: {
-    handleFileUpload() {
-      this.file = this.$refs.file.files[0];
+    getBase64(file) {
+      var reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function() {
+        console.log(reader.result);
+      };
+      reader.onerror = function(error) {
+        console.log("Error: ", error);
+      };
     },
-    submitFile() {
-      let formData = new FormData();
-      formData.append("file", this.file);
-      axios
-        .post("/single-file", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        })
-        .then(function(response) {
-          console.log("SUCCESS!!");
-        })
-        .catch(function() {
-          console.log("FAILURE!!");
-        });
+    updateParent(value) {
+      var update = true;
+      for (var i = 0; i < this.documents.length; i++) {
+        if (this.documents[0]["name"] == value.name) {
+          update = false;
+        }
+      }
+      if (update) {
+        console.log(update);
+        console.log(this.documents);
+        this.src = value; // someValue
+        this.addDocForm.name = value.name;
+        this.addDocForm.size = value.size;
+        this.addDocForm.base64 = this.getBase64(value);
+        this.src = value;
+        this.find_phrases();
+        const payload = {
+          name: this.addDocForm.name,
+          size: this.addDocForm.size,
+          base64: this.addDocForm.base64
+        };
+        this.addDoc(payload);
+        this.getDocs();
+        this.initForm();
+      }
     },
     deleteItem() {
       for (var i = 0; i < this.selected.length; i++) {
-        const index = this.documents.indexOf(this.selected[i]);
-        this.documents.splice(index, 1);
+        this.onDeleteDoc(this.selected[0]);
       }
-      this.dialog = false;
-      console.log("Got here");
+    },
+    removeDoc(docID) {
+      const path = `http://localhost:5000/documents/${docID}`;
+      axios
+        .delete(path)
+        .then(() => {
+          this.getDocs();
+          this.message = "Doc removed!";
+          this.showMessage = true;
+        })
+        .catch(error => {
+          // eslint-disable-next-line
+          console.error(error);
+          this.getDocs();
+        });
+    },
+    onDeleteDoc(doc) {
+      this.removeDoc(doc.id);
+    },
+    decode64(payload) {
+      var pdfData = atob(payload["base64"]);
+      var pdfjsLib = window["pdfjs-dist/build/pdf"];
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "//mozilla.github.io/pdf.js/build/pdf.worker.js";
+      var loadingTask = pdfjsLib.getDocument({ data: pdfData });
+
+      loadingTask.promise.then(
+        function(pdf) {
+          var pdfDocument = pdf;
+          var pagesPromises = [];
+
+          for (var i = 0; i < pdf.numPages; i++) {
+            // Required to prevent that i is always the total of pages
+            (function(pageNumber) {
+              pagesPromises.push(getPageText(pageNumber, pdfDocument));
+            })(i + 1);
+          }
+
+          Promise.all(pagesPromises).then(function(pagesText) {
+            // Display text of all the pages in the console
+            console.log(pagesText);
+          });
+          return pagesText;
+        },
+        function(reason) {
+          // PDF loading error
+          console.error(reason);
+        }
+      );
     },
     find_phrases() {
-      var s = " ";
-      console.log(this.message.replace(/ /g, "%20"));
-      var new_message = this.message.replace(" ", "%20");
+      var s = this.decode64(this.selected[0]["base64"]);
+      console.log(s.replace(/ /g, "%20"));
+      var new_message = s.replace(" ", "%20");
       console.log("Got here");
       this.output = "Loading...";
       axios.get("http://localhost:5000/calc/".concat(new_message)).then(
@@ -113,7 +168,61 @@ export default {
           console.log(this.output);
         }.bind(this)
       );
+    },
+    getDocs() {
+      const path = "http://localhost:5000/documents";
+      axios
+        .get(path)
+        .then(res => {
+          this.documents = res.data.documents;
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+    addDoc(payload) {
+      const path = "http://localhost:5000/documents";
+      axios
+        .post(path, payload)
+        .then(() => {
+          this.getDocs();
+        })
+        .catch(error => {
+          console.log(error);
+          this.getDocs();
+        });
+    },
+    initForm() {
+      this.addDocForm.name = "";
+      this.addDocForm.size = "";
     }
+  },
+  getPageText(pageNum, PDFDocumentInstance) {
+    // Return a Promise that is solved once the text of the page is retrieven
+    return new Promise(function(resolve, reject) {
+      PDFDocumentInstance.getPage(pageNum).then(function(pdfPage) {
+        // The main trick to obtain the text of the PDF page, use the getTextContent method
+        pdfPage.getTextContent().then(function(textContent) {
+          var textItems = textContent.items;
+          var finalString = "";
+
+          // Concatenate the string of the item to the final string
+          for (var i = 0; i < textItems.length; i++) {
+            var item = textItems[i];
+
+            finalString += item.str + " ";
+          }
+
+          // Solve promise with the text retrieven from the page
+          resolve(finalString);
+        });
+      });
+    });
+    return finalString;
+  },
+
+  created() {
+    this.getDocs();
   }
 };
 </script>

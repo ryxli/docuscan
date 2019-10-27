@@ -4,7 +4,7 @@
       <v-app-bar-nav-icon class="grey--text" @click="drawer = !drawer"></v-app-bar-nav-icon>
 
       <router-link to="/" style="text-decoration:none;">
-        <v-toolbar-title :class="clear" class="grey--text">
+        <v-toolbar-title class="grey--text">
           <span class="font-weight-bold blue--text">Docu</span>
           <span>Scan</span>
         </v-toolbar-title>

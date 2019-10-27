@@ -7,7 +7,6 @@
 
 
 from selenium import webdriver
-from xvfbwrapper import Xvfb
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as cond
@@ -24,7 +23,7 @@ import sys
 
 
 # In[39]:
-
+browser = webdriver.Chrome()
 
 options = webdriver.ChromeOptions()
 options.add_argument('window-size=800x841')
@@ -32,7 +31,6 @@ options.add_argument('headless')
 
 # now Firefox will run in a virtual display. 
 # you will not see the browser.
-driver = webdriver.Chrome("/Users/rishabhkrishnan/iCloud Drive (Archive)/Desktop/Berkeley/Freshman/CalHacks/unnamedhack/Mac/chromedriver",chrome_options=options)
 def get_phrases(text):
     driver.get('http://claudette.eui.eu/demo/#')
     textBox=driver.find_element_by_id("document_text")
