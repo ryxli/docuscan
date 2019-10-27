@@ -2,6 +2,7 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Home from "../views/Home.vue";
 import Dashboard from "../views/Dashboard.vue";
+import Dashboardcopy from "../views/Dashboardcopy.vue";
 import Files from "../views/Files.vue";
 
 Vue.use(VueRouter);
@@ -21,6 +22,11 @@ const routes = [
     path: "/files",
     name: "files",
     component: Files
+  },
+  {
+    path: "/tempdash",
+    name: "tempdash",
+    component: Dashboardcopy
   }
 ];
 
