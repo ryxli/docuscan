@@ -48,7 +48,7 @@ async function sendEnvelopeController (req, res) {
   const signerEmail = envir.USER_EMAIL || qp.USER_EMAIL || 'park.jinwoo@berkeley.edu';
 
   // The document you wish to send. Path is relative to the root directory of this repo.
-  const fileName = 'demo_documents/World_Wide_Corp_lorem.pdf';
+  const fileName = 'demo_documents/google_terms_student.pdf';
 
   ////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +87,9 @@ async function sendEnvelopeController (req, res) {
   const signer = docusign.Signer.constructFromObject({name: signerName,
         email: signerEmail, routingOrder: '1', recipientId: '1'});
 
-  // Create the signHere tab to be placed on the envelope
+  /*
+
+  // Create the signHere tab to be placed on the envelope, manual position
   const signHere0 = docusign.SignHere.constructFromObject({documentId: '1',
         pageNumber: '1', recipientId: '1', tabLabel: 'SignHereTab',
         xPosition: '195', yPosition: '147'});
@@ -95,10 +97,26 @@ async function sendEnvelopeController (req, res) {
   const signHere1 = docusign.SignHere.constructFromObject({documentId: '1',
         pageNumber: '1', recipientId: '1', tabLabel: 'SignHereTab',
         xPosition: '95', yPosition: '47'});
+  */
+
+  // Create the signHere tab to be placed on the envelop, by anchors
+  let signHereWithAnchor = docusign.SignHere.constructFromObject({
+        anchorString: ': __',
+        anchorYOffset: '10', anchorUnits: 'pixels',
+        anchorXOffset: '10'
+  });
+
+  let signertabs = docusign.Tabs.constructFromObject({
+        signHereTabs: [signHereWithAnchor]
+  });
+  signer.tabs = signertabs;
 
   // Create the overall tabs object for the signer and add the signHere tabs array
   // Note that tabs are relative to receipients/signers.
+
+  /*
   signer.tabs = docusign.Tabs.constructFromObject({signHereTabs: [signHere0, signHere1]});
+  */
 
   // Add the recipients object to the envelope definition.
   // It includes an array of the signer objects. 
