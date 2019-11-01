@@ -1,4 +1,5 @@
-# frontend
+# docuscan
+https://devpost.com/software/docuscan-k3ouyr
 
 ## Project setup
 
@@ -22,4 +23,3 @@ npm run build
 
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
-# unnamedhack
